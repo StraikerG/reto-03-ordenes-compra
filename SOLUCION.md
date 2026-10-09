@@ -80,13 +80,38 @@ El adaptador Gemini implementa tres detalles relevantes:
 2. Elimina campos de JSON Schema que Gemini no admite en `functionDeclarations`, como `additionalProperties`.
 3. Conserva `thoughtSignature` en cada `functionCall`, necesaria para continuar correctamente el ciclo de herramientas con Gemini.
 
-### Costos y medición
+### Medición de tokens y costo estimado
 
-`demo.ts` ejecuta los seis casos directamente sobre las herramientas y no consume un modelo de lenguaje; su costo de IA es cero.
+Se estimó el consumo de tokens de los seis casos usando el prompt actual, las declaraciones de herramientas, los payloads de fixtures y la cantidad de llamadas del ciclo del agente.
 
-El chat registra tokens de entrada y salida por sesión. El costo monetario debe calcularse con el consumo observado y la tarifa vigente del modelo configurado. No se reporta una cifra fija para evitar presentar costos no medidos.
+Componentes base de cada llamada:
 
-La solución limita el uso con topes de tokens, iteraciones, tiempo de espera, longitud de mensaje y solicitudes por IP.
+- System prompt: 5.277 caracteres, aproximadamente 1.319 tokens.
+- Declaraciones de herramientas: 2.857 caracteres, aproximadamente 714 tokens.
+- Modelo evaluado: `gemini-3.5-flash-lite`.
+- Tarifa estándar de referencia: USD 0,30 por millón de tokens de entrada y USD 2,50 por millón de tokens de salida.
+- En Free Tier, el costo monetario efectivo es USD 0 mientras se mantenga dentro de la cuota disponible.
+
+| Caso | Llamadas al modelo | Tokens entrada | Tokens salida | Costo estimado en nivel pago |
+|---|---:|---:|---:|---:|
+| sol-001 | 5 | 13.119 | 68 | USD 0,0041 |
+| sol-002 | 4 | 10.005 | 313 | USD 0,0038 |
+| sol-003 | 4 | 10.130 | 313 | USD 0,0038 |
+| sol-004 | 7 | 20.126 | 359 | USD 0,0069 |
+| sol-005 | 7 | 20.210 | 359 | USD 0,0070 |
+| sol-006 | 7 | 19.818 | 359 | USD 0,0068 |
+| **Total: seis sesiones separadas** | **34** | **93.408** | **1.771** | **USD 0,0324** |
+| **Promedio por caso** | **5,7** | **15.568** | **295** | **USD 0,0054** |
+
+La demo determinista (`bun run demo`) no llama al modelo y, por tanto, tiene costo de IA igual a USD 0.
+
+### Impacto de conservar historial
+
+También se evaluaron los seis casos dentro de una única sesión. Aunque la salida se mantuvo en 1.771 tokens, la entrada aumentó a 204.488 tokens, con costo estimado de USD 0,0658.
+
+Esto representa aproximadamente 2,19 veces más tokens de entrada que procesar los casos en sesiones separadas. La razón es que cada llamada a Gemini reenvía el historial acumulado, incluyendo mensajes, resultados de herramientas y contexto previo.
+
+Para producción, esto justifica aplicar estrategias de compactación de historial, resúmenes después de cerrar cada caso y límites de tokens por sesión.
 
 ## 5. Matriz de controles
 
