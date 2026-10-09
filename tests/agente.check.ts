@@ -56,8 +56,13 @@ const resultadoTool = (m: Mensaje[]) => {
   assert.deepEqual(t1.casosPendientes, ["sol-004"])
   assert.equal(t1.toolCalls.length, 1)
   const t2 = await chat(cfg, llm, "sesion-flujo-1", "sí")
-  assert.equal(t2.reply, "OC creada.")
-  assert.equal(t2.needsConfirmation, false)
+  assert.match(t2.reply, /OC creada exitosamente/)
+  assert.equal(t2.needsConfirmation, false, "la confirmación debe consumirse")
+  assert.doesNotMatch(
+    t2.reply,
+    /Falta tu confirmación|¿Confirmas crear/i,
+    "no debe pedir confirmación nuevamente después de crear la OC",
+  )
   assert.ok(t2.toolCalls[0]?.ok, "crear confirmada debe ser ok")
   console.log("✓ confirmación humana: pide en el turno 1 y crea en el turno 2")
 }

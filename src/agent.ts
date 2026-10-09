@@ -79,7 +79,14 @@ export async function cargarSystemPrompt(directory: string): Promise<string> {
 interface RespuestaHerramienta {
   ok?: boolean
   codigo?: string
-  data?: { apta?: boolean; confirmaciones?: unknown[] }
+  data?: {
+    apta?: boolean
+    confirmaciones?: unknown[]
+    numero_oc?: string
+    fecha?: string | null
+    idempotente?: boolean
+    retroactiva?: boolean
+  }
 }
 
 function leerRespuesta(texto: string): RespuestaHerramienta {
@@ -158,7 +165,31 @@ export async function chat(
         if (caso && llamada.name === "oc_validar" && resp.data?.apta && (resp.data.confirmaciones?.length ?? 0) > 0) {
           sesion.pendientes.add(caso)
         }
-        if (caso && llamada.name === "oc_crear" && resp.ok) sesion.pendientes.delete(caso)
+
+        // Resultado terminal: tras crear una OC no se vuelve a consultar al LLM.
+        // Esto evita que el modelo repita una confirmación que ya fue consumida.
+        if (caso && llamada.name === "oc_crear" && resp.ok) {
+          sesion.pendientes.delete(caso)
+
+          const numeroOc = resp.data?.numero_oc ?? "sin número reportado"
+          const fecha = resp.data?.fecha ?? "sin fecha reportada"
+          const retroactiva = resp.data?.retroactiva ? "Sí" : "No"
+
+          if (resp.data?.idempotente) {
+            return terminar(
+              `✅ No se creó una orden duplicada. La OC **${numeroOc}** ya existía para el caso **${caso}**.`,
+            )
+          }
+
+          return terminar(
+            `✅ OC creada exitosamente.\n\n` +
+              `- **Número de OC:** ${numeroOc}\n` +
+              `- **Fecha:** ${fecha}\n` +
+              `- **Caso:** ${caso}\n` +
+              `- **Retroactiva:** ${retroactiva}\n\n` +
+              "La confirmación fue registrada y la trazabilidad quedó almacenada en el SAP simulado.",
+          )
+        }
       }
     }
 
