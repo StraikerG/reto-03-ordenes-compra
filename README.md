@@ -156,8 +156,11 @@ El contenedor ejecuta la aplicación con el usuario no-root `bun` y verifica aut
 
 Aplicación disponible en Render:
 
-```text https://reto-03-ordenes-compra-opl6.onrender.com
-```
+[https://reto-03-ordenes-compra-opl6.onrender.com](https://reto-03-ordenes-compra-opl6.onrender.com)
+
+Health check:
+
+[https://reto-03-ordenes-compra-opl6.onrender.com/api/health](https://reto-03-ordenes-compra-opl6.onrender.com/api/health)
 
 ## Documentación técnica
 
