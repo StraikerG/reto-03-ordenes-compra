@@ -124,7 +124,7 @@ if (process.argv[1] && fileURLToPath(import.meta.url) === process.argv[1]) {
   const variableClave =
     llm.provider === "gemini" ? "GEMINI_API_KEY" : "ANTHROPIC_API_KEY"
 
-  crearServidor(directory, llm).listen(puerto, () => {
+  crearServidor(directory, llm).listen(puerto, "0.0.0.0", () => {
     console.log(
       `Agente de OC en http://localhost:${puerto} ` +
         `(proveedor: ${llm.provider}, modelo: ${llm.model}` +
