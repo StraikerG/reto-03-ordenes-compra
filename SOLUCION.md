@@ -201,8 +201,12 @@ Gemini se utiliza en tiempo de ejecución únicamente como capa conversacional y
 
 ## Despliegue público
 
-Pendiente de configuración en Render. Una vez desplegado, registrar aquí la URL pública y validar:
+La aplicación se desplegó como Web Service Docker en Render.
 
-```text
-https://<servicio>.onrender.com/api/health
-```
+- Chat público: `https://reto-03-ordenes-compra-opl6.onrender.com`
+- Health check: `https://reto-03-ordenes-compra-opl6.onrender.com/api/health`
+- Runtime: Bun dentro de contenedor Docker.
+- Proveedor LLM: Gemini, configurado mediante variables de entorno de Render.
+- Endpoint de salud: `GET /api/health`.
+
+El servicio se validó al quedar en estado `Live` en Render.
