@@ -154,13 +154,9 @@ El contenedor ejecuta la aplicación con el usuario no-root `bun` y verifica aut
 
 ## Despliegue público
 
-Pendiente de configuración en Render.
+Aplicación disponible en Render:
 
-La URL pública y el endpoint de salud se agregarán después del despliegue:
-
-```text
-https://<servicio>.onrender.com
-https://<servicio>.onrender.com/api/health
+```text https://reto-03-ordenes-compra-opl6.onrender.com
 ```
 
 ## Documentación técnica
