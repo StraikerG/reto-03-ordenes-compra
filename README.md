@@ -34,7 +34,7 @@ Configurar `.env`:
 ```dotenv
 LLM_PROVIDER=gemini
 GEMINI_API_KEY=tu_clave_local
-GEMINI_MODEL=gemini-3.6-flash
+GEMINI_MODEL=gemini-3.5-flash-lite
 PORT=3000
 ```
 

@@ -66,7 +66,7 @@ La implementación validada utiliza **Google Gemini** mediante REST nativo con `
 | Elemento | Implementación |
 |---|---|
 | Proveedor principal | Gemini |
-| Modelo configurado | `gemini-3.6-flash` |
+| Modelo configurado | `gemini-3.5-flash-lite` |
 | Clave | `GEMINI_API_KEY`, solo backend |
 | Adaptador | `src/llm/gemini.ts` |
 | Selector | `src/llm/factory.ts` |

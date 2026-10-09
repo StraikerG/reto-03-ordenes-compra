@@ -197,7 +197,7 @@ export class GeminiAdapter implements LlmAdapter {
 
   constructor(env: Record<string, string | undefined> = process.env) {
     this.clave = env["GEMINI_API_KEY"] ?? ""
-    this.model = env["GEMINI_MODEL"] ?? "gemini-3.6-flash"
+    this.model = env["GEMINI_MODEL"] ?? "gemini-3.5-flash-lite"
     this.timeoutMs = Number(env["LLM_TIMEOUT_MS"] ?? 60000)
     this.configurado = this.clave !== ""
   }
