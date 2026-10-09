@@ -319,6 +319,12 @@ export class GeminiAdapter implements LlmAdapter {
       .filter(esTexto)
       .map((parte) => parte.text)
       .join("")
+    if (!content && toolCalls.length === 0) {
+      throw new ErrorLlm(
+    `El modelo no devolvió contenido (motivo: ${ candidate.finishReason ?? "desconocido" }). Intente de nuevo.`,
+  )
+}
+
 
     return {
       content,

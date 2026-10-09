@@ -109,6 +109,31 @@ function contar(sesion: Sesion, uso: { input: number; output: number }): void {
   tokensGlobales += n
 }
 
+interface OcCreada {
+  caso: string
+  numero_oc?: string
+  fecha?: string | null
+  idempotente?: boolean
+  retroactiva?: boolean
+}
+
+function resumenCreadas(creadas: OcCreada[]): string {
+  return creadas
+    .map((c) => {
+      const numero = c.numero_oc ?? "sin número reportado"
+      if (c.idempotente) return `✅ No se creó una orden duplicada. La OC **${numero}** ya existía para el caso **${c.caso}**.`
+      return (
+        `✅ OC creada exitosamente.\n\n` +
+        `- **Número de OC:** ${numero}\n` +
+        `- **Fecha:** ${c.fecha ?? "sin fecha reportada"}\n` +
+        `- **Caso:** ${c.caso}\n` +
+        `- **Retroactiva:** ${c.retroactiva ? "Sí" : "No"}\n\n` +
+        "La OC quedó registrada en el SAP simulado y en out/control.csv."
+      )
+    })
+    .join("\n\n---\n\n")
+}
+
 export async function chat(
   cfg: ConfigAgente,
   llm: LlmAdapter,
@@ -154,6 +179,7 @@ export async function chat(
       sesion.mensajes.push({ role: "assistant", content: r.content, toolCalls: r.toolCalls })
       if (r.toolCalls.length === 0) return terminar(r.content)
 
+      const creadas: OcCreada[] = []
       for (const llamada of r.toolCalls) {
         const e = await ejecutarHerramienta(llamada.name, llamada.args, ctx)
         llamadas.push({ name: e.name, args: e.args, ok: e.ok, resumen: e.resumen })
@@ -166,31 +192,17 @@ export async function chat(
           sesion.pendientes.add(caso)
         }
 
-        // Resultado terminal: tras crear una OC no se vuelve a consultar al LLM.
-        // Esto evita que el modelo repita una confirmación que ya fue consumida.
         if (caso && llamada.name === "oc_crear" && resp.ok) {
           sesion.pendientes.delete(caso)
-
-          const numeroOc = resp.data?.numero_oc ?? "sin número reportado"
-          const fecha = resp.data?.fecha ?? "sin fecha reportada"
-          const retroactiva = resp.data?.retroactiva ? "Sí" : "No"
-
-          if (resp.data?.idempotente) {
-            return terminar(
-              `✅ No se creó una orden duplicada. La OC **${numeroOc}** ya existía para el caso **${caso}**.`,
-            )
-          }
-
-          return terminar(
-            `✅ OC creada exitosamente.\n\n` +
-              `- **Número de OC:** ${numeroOc}\n` +
-              `- **Fecha:** ${fecha}\n` +
-              `- **Caso:** ${caso}\n` +
-              `- **Retroactiva:** ${retroactiva}\n\n` +
-              "La confirmación fue registrada y la trazabilidad quedó almacenada en el SAP simulado.",
-          )
+          creadas.push({ caso, ...resp.data })
         }
       }
+
+      // Resultado terminal: tras crear una OC no se vuelve a consultar al LLM (así no repite una
+      // confirmación ya consumida). Se decide DESPUÉS de ejecutar todas las llamadas de esta
+      // respuesta: si se saliera antes, las llamadas restantes quedarían sin resultado en el
+      // historial y el proveedor rechazaría el siguiente mensaje de la sesión.
+      if (creadas.length > 0) return terminar(resumenCreadas(creadas))
     }
 
     // CA1: tope alcanzado → una última llamada sin herramientas para resumir lo hecho y lo pendiente.

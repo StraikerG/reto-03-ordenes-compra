@@ -6,7 +6,7 @@ import assert from "node:assert/strict"
 import { rm } from "node:fs/promises"
 import { dirname, join } from "node:path"
 import { fileURLToPath } from "node:url"
-import { chat, type ConfigAgente } from "../src/agent"
+import { chat, obtenerSesion, type ConfigAgente } from "../src/agent"
 import { ErrorLlm, type LlmAdapter, type Mensaje, type RespuestaLlm } from "../src/llm/adapter"
 import { crearServidor } from "../src/server"
 
@@ -65,6 +65,26 @@ const resultadoTool = (m: Mensaje[]) => {
   )
   assert.ok(t2.toolCalls[0]?.ok, "crear confirmada debe ser ok")
   console.log("✓ confirmación humana: pide en el turno 1 y crea en el turno 2")
+}
+
+// 1b) Dos oc_crear en una misma respuesta del modelo: se ejecutan ambas y el historial queda consistente.
+{
+  const llm = new Falso((m) => {
+    if (ultimo(m)?.role === "user") {
+      return { content: "", usage: uso, toolCalls: [
+        { id: "p1", name: "oc_crear", args: { caso: "sol-001" } },
+        { id: "p2", name: "oc_crear", args: { caso: "sol-002" } },
+      ] }
+    }
+    return texto("no debería llegar aquí")
+  })
+  const t = await chat(cfg, llm, "sesion-paralelo-1", "procesa sol-001 y sol-002")
+  assert.equal(t.toolCalls.length, 2, "ambas llamadas deben ejecutarse")
+  assert.match(t.reply, /OC creada exitosamente/)
+  const hist = obtenerSesion("sesion-paralelo-1").mensajes
+  const resultados = new Set(hist.flatMap((x) => (x.role === "tool" ? [x.toolCallId] : [])))
+  assert.ok(resultados.has("p1") && resultados.has("p2"), "cada llamada del modelo debe tener su resultado en el historial")
+  console.log("✓ llamadas en paralelo: todas se ejecutan y el historial queda consistente")
 }
 
 // 2) El modelo intenta confirmar por su cuenta (sin que el turno anterior lo pidiera): se rechaza.
